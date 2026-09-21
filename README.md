@@ -86,3 +86,28 @@ User Request + Fictional Patient Data
 ![AgentVerify AI v1.1 Live Demo](tt.PNG)
 
 ---
+## Evaluation
+
+AgentVerify AI v1.3 includes an automated evaluation suite using 10 completely fictional, non-PHI test cases.
+
+The evaluation checks:
+
+- Required-field detection
+- Relevant payer-question generation
+- Knowledge-base / RAG retrieval when appropriate
+- Retention of the "confirm directly with payer" safety behavior
+
+### Evaluation Result
+
+**10/10 PASS — 100%**
+
+The test suite includes complete and incomplete Crown cases, preventive cleaning, missing patient information, incomplete payer information, an unknown procedure, waiting-period questions, deductible/maximum questions, and a deliberately vague case.
+
+The score is calculated automatically by `evaluate.py` from `eval_cases.json` and is not hard-coded.
+
+## Project Progression
+
+- **v1.0** — Tool-using agent
+- **v1.1** — Provider fallback + downloadable report
+- **v1.2** — Grounded RAG knowledge base
+- **v1.3** — Automated evaluation suite

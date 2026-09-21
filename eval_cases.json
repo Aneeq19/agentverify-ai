@@ -1,0 +1,148 @@
+[
+  {
+    "id": 1,
+    "name": "Complete crown",
+    "data": {
+      "patient_name": "Alice Demo",
+      "dob": "04/12/1992",
+      "member_id": "TEST1001",
+      "group_number": "GRP100",
+      "procedure": "D2740 Crown",
+      "notes": "Fictional complete crown case."
+    },
+    "request": "Check what information is missing before payer verification.",
+    "expected_tool": "check_required_fields",
+    "expected_missing": []
+  },
+  {
+    "id": 2,
+    "name": "Crown missing Member ID",
+    "data": {
+      "patient_name": "Brian Demo",
+      "dob": "08/21/1988",
+      "member_id": "",
+      "group_number": "GRP101",
+      "procedure": "D2740 Crown",
+      "notes": "Fictional crown case missing Member ID."
+    },
+    "request": "Check what information is missing.",
+    "expected_tool": "check_required_fields",
+    "expected_missing": ["member_id"]
+  },
+  {
+    "id": 3,
+    "name": "Crown missing Group",
+    "data": {
+      "patient_name": "Carla Demo",
+      "dob": "03/10/1990",
+      "member_id": "TEST1003",
+      "group_number": "",
+      "procedure": "D2740 Crown",
+      "notes": "Fictional crown case missing Group Number."
+    },
+    "request": "Check what information is missing.",
+    "expected_tool": "check_required_fields",
+    "expected_missing": ["group_number"]
+  },
+  {
+    "id": 4,
+    "name": "Preventive cleaning",
+    "data": {
+      "patient_name": "David Demo",
+      "dob": "06/15/1997",
+      "member_id": "TEST1004",
+      "group_number": "GRP104",
+      "procedure": "Preventive cleaning",
+      "notes": "Prepare frequency questions."
+    },
+    "request": "Build questions to ask the payer about preventive cleaning frequency.",
+    "expected_tool": "build_payer_questions",
+    "rag_keyword": "frequency"
+  },
+  {
+    "id": 5,
+    "name": "Missing DOB",
+    "data": {
+      "patient_name": "Emma Demo",
+      "dob": "",
+      "member_id": "TEST1005",
+      "group_number": "GRP105",
+      "procedure": "Crown",
+      "notes": "DOB is intentionally missing."
+    },
+    "request": "Check required information.",
+    "expected_tool": "check_required_fields",
+    "expected_missing": ["dob"]
+  },
+  {
+    "id": 6,
+    "name": "Incomplete payer information",
+    "data": {
+      "patient_name": "Frank Demo",
+      "dob": "02/14/1991",
+      "member_id": "",
+      "group_number": "",
+      "procedure": "Crown",
+      "notes": "Insurance identifiers are incomplete."
+    },
+    "request": "Build questions for the missing payer information.",
+    "expected_tool": "build_payer_questions",
+    "expected_question_keywords": ["Member ID", "Group Number"]
+  },
+  {
+    "id": 7,
+    "name": "Unknown procedure",
+    "data": {
+      "patient_name": "Grace Demo",
+      "dob": "11/11/1994",
+      "member_id": "TEST1007",
+      "group_number": "GRP107",
+      "procedure": "Unknown procedure",
+      "notes": "Procedure details are unclear."
+    },
+    "request": "Prepare this case for payer verification.",
+    "rag_keyword": "confirm"
+  },
+  {
+    "id": 8,
+    "name": "Waiting-period question",
+    "data": {
+      "patient_name": "Henry Demo",
+      "dob": "07/19/1985",
+      "member_id": "TEST1008",
+      "group_number": "GRP108",
+      "procedure": "Crown",
+      "notes": "Need general waiting-period workflow guidance."
+    },
+    "request": "What should we ask about the waiting period?",
+    "rag_keyword": "waiting"
+  },
+  {
+    "id": 9,
+    "name": "Deductible and maximum question",
+    "data": {
+      "patient_name": "Irene Demo",
+      "dob": "09/09/1993",
+      "member_id": "TEST1009",
+      "group_number": "GRP109",
+      "procedure": "Crown",
+      "notes": "Need deductible and annual maximum workflow guidance."
+    },
+    "request": "Prepare deductible and annual maximum questions.",
+    "rag_keyword": "deductible"
+  },
+  {
+    "id": 10,
+    "name": "Deliberately vague case",
+    "data": {
+      "patient_name": "Jordan Demo",
+      "dob": "05/05/1996",
+      "member_id": "",
+      "group_number": "",
+      "procedure": "",
+      "notes": "Need help."
+    },
+    "request": "What should I do?",
+    "expected_missing": ["member_id", "group_number", "procedure"]
+  }
+]
