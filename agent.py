@@ -1,9 +1,9 @@
 import os
 import requests
+from pathlib import Path
 from dotenv import load_dotenv
 from google import genai
 
-# Load environment variables from .env
 load_dotenv()
 
 # =========================================================
@@ -14,11 +14,11 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 CLOUDFLARE_ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID")
 CLOUDFLARE_API_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN")
 
-# Gemini = Primary AI provider
 client = genai.Client(api_key=GEMINI_API_KEY)
 
-# Cloudflare = Backup AI provider
 CLOUDFLARE_MODEL = "@cf/meta/llama-3.1-8b-instruct"
+
+KNOWLEDGE_BASE_PATH = Path(__file__).parent / "knowledge_base.md"
 
 
 # =========================================================
@@ -26,9 +26,7 @@ CLOUDFLARE_MODEL = "@cf/meta/llama-3.1-8b-instruct"
 # =========================================================
 
 def check_required_fields(data: dict) -> str:
-    """
-    Check whether the basic patient verification fields are present.
-    """
+    """Check whether the basic patient verification fields are present."""
 
     required = [
         "patient_name",
@@ -50,9 +48,7 @@ def check_required_fields(data: dict) -> str:
 
 
 def build_payer_questions(data: dict) -> str:
-    """
-    Build questions that should be asked to the insurance payer.
-    """
+    """Build questions that should be asked to the insurance payer."""
 
     questions = []
 
@@ -75,9 +71,7 @@ def build_payer_questions(data: dict) -> str:
 
 
 def generate_case_summary(data: dict) -> str:
-    """
-    Generate a concise summary of the fictional verification case.
-    """
+    """Generate a concise summary of the fictional verification case."""
 
     summary = f"""
 **Case Summary**
@@ -93,15 +87,73 @@ def generate_case_summary(data: dict) -> str:
     return summary.strip()
 
 
+def search_knowledge_base(query: str) -> str:
+    """
+    Search the local fictional/non-PHI workflow knowledge base.
+
+    This is lightweight local RAG retrieval. It returns the most
+    relevant knowledge-base sections based on query keywords.
+    """
+
+    if not KNOWLEDGE_BASE_PATH.exists():
+        return "Knowledge base is unavailable."
+
+    content = KNOWLEDGE_BASE_PATH.read_text(
+        encoding="utf-8"
+    )
+
+    # Split Markdown into sections.
+    sections = [
+        section.strip()
+        for section in content.split("\n---\n")
+        if section.strip()
+    ]
+
+    query_words = {
+        word.strip(".,:;!?()[]{}").lower()
+        for word in query.split()
+        if len(word) > 2
+    }
+
+    scored_sections = []
+
+    for section in sections:
+        section_lower = section.lower()
+
+        score = sum(
+            1 for word in query_words
+            if word in section_lower
+        )
+
+        if score > 0:
+            scored_sections.append((score, section))
+
+    scored_sections.sort(
+        key=lambda item: item[0],
+        reverse=True
+    )
+
+    if not scored_sections:
+        return (
+            "No specific knowledge-base section matched the request. "
+            "Benefits must still be confirmed directly with the payer."
+        )
+
+    # Return up to three most relevant sections.
+    relevant_sections = [
+        section
+        for _, section in scored_sections[:3]
+    ]
+
+    return "\n\n---\n\n".join(relevant_sections)
+
+
 # =========================================================
 # CLOUDFLARE BACKUP
 # =========================================================
 
 def get_cloudflare_decision(prompt: str) -> str:
-    """
-    Ask Cloudflare Workers AI to select an agent tool.
-    Used only when Gemini fails.
-    """
+    """Use Cloudflare Workers AI when Gemini fails."""
 
     if not CLOUDFLARE_ACCOUNT_ID or not CLOUDFLARE_API_TOKEN:
         raise RuntimeError("Cloudflare credentials are not configured.")
@@ -143,11 +195,9 @@ def get_cloudflare_decision(prompt: str) -> str:
 
     ai_result = result.get("result", {})
 
-    # Cloudflare may return the generated text in "response".
     if ai_result.get("response"):
         return ai_result["response"].strip()
 
-    # Handle OpenAI-style choices response if returned.
     choices = ai_result.get("choices", [])
 
     if choices:
@@ -166,37 +216,73 @@ def get_cloudflare_decision(prompt: str) -> str:
 
 def run_agent(user_input: str, data: dict) -> dict:
     """
-    AgentVerify AI v1.0
+    AgentVerify AI v1.2
 
-    Gemini is the primary AI provider.
-    Cloudflare Workers AI is the automatic backup.
-
-    The AI selects one of the available Python tools.
+    Flow:
+    Fictional case
+        -> local RAG knowledge retrieval
+        -> AI tool decision
+        -> existing preparation tool
+        -> grounded preparation result
     """
 
-    prompt = f"""
-You are AgentVerify, a dental insurance verification AI agent.
+    # =====================================================
+    # RAG RETRIEVAL
+    # =====================================================
 
-The user will give you a task.
+    rag_query = " ".join(
+        [
+            user_input,
+            data.get("procedure", ""),
+            data.get("notes", ""),
+        ]
+    )
+
+    knowledge_context = search_knowledge_base(rag_query)
+
+    prompt = f"""
+You are AgentVerify, an AI agent for dental insurance
+verification workflow preparation.
+
+This system uses fictional patient data only.
+
+The following context was retrieved from the local
+workflow knowledge base:
+
+--- KNOWLEDGE BASE CONTEXT ---
+
+{knowledge_context}
+
+--- END KNOWLEDGE BASE CONTEXT ---
 
 User request:
 "{user_input}"
 
-You have exactly three tools available:
+Procedure:
+"{data.get('procedure', '')}"
+
+You have exactly three ACTION tools available:
 
 1. check_required_fields
-Use this when the user wants to know whether required patient
+Use when the user wants to know whether required patient
 or verification information is missing.
 
 2. build_payer_questions
-Use this when the user wants questions to ask the insurance payer.
+Use when the user wants questions to prepare for the
+insurance payer.
 
 3. generate_case_summary
-Use this when the user wants a summary of the verification case.
+Use when the user wants a summary of the fictional case.
 
-Choose the SINGLE best tool for the user's request.
+The knowledge-base context is guidance only.
+Never invent patient-specific eligibility, percentages,
+dollar amounts, coverage, frequencies, or benefits.
 
-Reply with ONLY one of these exact tool names:
+Benefits must be confirmed directly with the payer.
+
+Choose the SINGLE best ACTION tool.
+
+Reply with ONLY one exact tool name:
 
 check_required_fields
 build_payer_questions
@@ -210,7 +296,6 @@ generate_case_summary
     # =====================================================
 
     try:
-
         if not GEMINI_API_KEY:
             raise RuntimeError("Gemini API key is not configured.")
 
@@ -229,19 +314,17 @@ generate_case_summary
     # =====================================================
 
     except Exception:
-
         try:
-
             decision = get_cloudflare_decision(prompt).lower()
-
-            provider = "Cloudflare Workers AI"
+            provider = "Cloudflare fallback"
 
         except Exception:
-
             return {
                 "success": False,
                 "tool_used": None,
                 "provider": None,
+                "knowledge_source": "knowledge_base.md",
+                "knowledge_context": knowledge_context,
                 "result": (
                     "AI service is temporarily unavailable. "
                     "Both the primary and backup providers could not "
@@ -250,46 +333,54 @@ generate_case_summary
             }
 
     # =====================================================
-    # TOOL ROUTING
+    # ACTION TOOL ROUTING
     # =====================================================
 
     if "check_required_fields" in decision:
-
         tool_name = "check_required_fields"
-
-        result = check_required_fields(data)
+        action_result = check_required_fields(data)
 
     elif "build_payer_questions" in decision:
-
         tool_name = "build_payer_questions"
-
-        result = build_payer_questions(data)
+        action_result = build_payer_questions(data)
 
     elif "generate_case_summary" in decision:
-
         tool_name = "generate_case_summary"
-
-        result = generate_case_summary(data)
+        action_result = generate_case_summary(data)
 
     else:
-
         return {
             "success": False,
             "tool_used": None,
             "provider": provider,
+            "knowledge_source": "knowledge_base.md",
+            "knowledge_context": knowledge_context,
             "result": (
-                "The AI could not select a valid tool. "
+                "The AI could not select a valid action tool. "
                 "Please rephrase your request and try again."
             ),
         }
 
     # =====================================================
-    # SUCCESS RESPONSE
+    # GROUNDED RESULT
     # =====================================================
+
+    result = f"""
+{action_result}
+
+### Relevant workflow guidance
+
+{knowledge_context}
+
+**Important:** This is verification preparation only.
+Benefits and eligibility must be confirmed directly with the payer.
+""".strip()
 
     return {
         "success": True,
         "tool_used": tool_name,
         "provider": provider,
+        "knowledge_source": "knowledge_base.md",
+        "knowledge_context": knowledge_context,
         "result": result,
     }

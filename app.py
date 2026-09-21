@@ -14,7 +14,6 @@ st.set_page_config(
 
 # =========================================================
 # SESSION STATE
-# Keeps the result visible after clicking Download
 # =========================================================
 
 if "agent_response" not in st.session_state:
@@ -29,16 +28,17 @@ if "report_text" not in st.session_state:
 # =========================================================
 
 def build_report(data, user_request, response):
-    """
-    Create a clean Markdown verification-preparation report.
-    This report does NOT confirm insurance benefits.
-    """
+    """Create a grounded verification-preparation report."""
 
     provider = response.get("provider", "Unknown")
     tool_used = response.get("tool_used", "Unknown")
+    knowledge_source = response.get(
+        "knowledge_source",
+        "knowledge_base.md"
+    )
     result = response.get("result", "No result returned.")
 
-    report = f"""# AgentVerify AI - Verification Preparation Report
+    report = f"""# AgentVerify AI v1.2 - Grounded Verification Preparation Report
 
 Generated: {datetime.now().strftime("%Y-%m-%d %H:%M")}
 
@@ -59,14 +59,18 @@ Generated: {datetime.now().strftime("%Y-%m-%d %H:%M")}
 
 - AI Provider: {provider}
 - Agent Selected Tool: {tool_used}
+- Knowledge Source Used: {knowledge_source}
 
-## Preparation Result
+## Grounded Preparation Result
 
 {result}
 
 ## Important Notice
 
 This report is for dental insurance verification preparation only.
+
+The local knowledge base contains general workflow guidance only.
+It does not contain or confirm patient-specific insurance benefits.
 
 AgentVerify AI does not confirm eligibility, coverage, benefits,
 limitations, frequencies, deductibles, maximums, or payment.
@@ -84,10 +88,11 @@ This demo uses fictional patient data only.
 # HEADER
 # =========================================================
 
-st.title("🦷 AgentVerify AI v1.1")
+st.title("🦷 AgentVerify AI v1.2")
 
 st.caption(
-    "AI-assisted workflow preparation for dental insurance verification"
+    "Grounded RAG-assisted workflow preparation "
+    "for dental insurance verification"
 )
 
 st.markdown("---")
@@ -99,7 +104,8 @@ st.markdown("---")
 
 st.info(
     "Demo only — use fictional patient information. "
-    "Do not enter real patient information or protected health information (PHI)."
+    "Do not enter real patient information or protected "
+    "health information (PHI)."
 )
 
 
@@ -156,7 +162,6 @@ data = {
     "notes": notes.strip()
 }
 
-
 st.markdown("---")
 
 
@@ -182,7 +187,6 @@ if st.button(
     use_container_width=True
 ):
 
-    # Reset previous result
     st.session_state.agent_response = None
     st.session_state.report_text = None
 
@@ -193,13 +197,19 @@ if st.button(
     validation_errors = []
 
     if not patient_name.strip():
-        validation_errors.append("Patient Name is required.")
+        validation_errors.append(
+            "Patient Name is required."
+        )
 
     if not dob.strip():
-        validation_errors.append("Date of Birth is required.")
+        validation_errors.append(
+            "Date of Birth is required."
+        )
 
     if not procedure.strip():
-        validation_errors.append("Procedure is required.")
+        validation_errors.append(
+            "Procedure is required."
+        )
 
     if not user_request.strip():
         validation_errors.append(
@@ -208,25 +218,28 @@ if st.button(
 
     if validation_errors:
 
-        st.error("Please fix the following before running the agent:")
+        st.error(
+            "Please fix the following before running the agent:"
+        )
 
         for error in validation_errors:
             st.write(f"- {error}")
 
     else:
 
+        # Visible validation PASS state
+        st.success(
+            "✅ Input Validation PASS"
+        )
+
         with st.spinner(
-            "Agent is thinking and selecting the appropriate tool..."
+            "Searching knowledge and selecting the appropriate tool..."
         ):
 
             response = run_agent(
                 user_request,
                 data
             )
-
-        # =================================================
-        # SUCCESS
-        # =================================================
 
         if response.get("success"):
 
@@ -237,10 +250,6 @@ if st.button(
                 user_request,
                 response
             )
-
-        # =================================================
-        # CLEAN FAILURE
-        # =================================================
 
         else:
 
@@ -279,18 +288,30 @@ if st.session_state.agent_response:
         "Unknown"
     )
 
+    knowledge_source = response.get(
+        "knowledge_source",
+        "knowledge_base.md"
+    )
+
     # Visible provider
     st.info(
         f"**AI provider used:** `{provider}`"
     )
 
-    # Visible agent-selected tool
+    # Visible RAG knowledge source
+    st.info(
+        f"**Knowledge source used:** `{knowledge_source}`"
+    )
+
+    # Visible selected action tool
     st.info(
         f"**Agent selected tool:** `{tool_used}`"
     )
 
-    # Result
-    st.markdown("### Preparation Result")
+    # Grounded result
+    st.markdown(
+        "### Grounded Preparation Result"
+    )
 
     st.markdown(
         response.get(
@@ -304,10 +325,10 @@ if st.session_state.agent_response:
     # =====================================================
 
     st.warning(
-        "⚠️ Preparation only — AgentVerify does not verify or confirm "
-        "insurance benefits. Eligibility, coverage, limitations, "
-        "deductibles, maximums and benefits must be confirmed "
-        "directly with the payer."
+        "⚠️ Preparation only — AgentVerify does not verify "
+        "or confirm insurance benefits. Eligibility, coverage, "
+        "limitations, deductibles, maximums, frequencies and "
+        "benefits must be confirmed directly with the payer."
     )
 
     # =====================================================
@@ -317,9 +338,9 @@ if st.session_state.agent_response:
     if st.session_state.report_text:
 
         st.download_button(
-            label="⬇️ Download Verification Preparation Report",
+            label="⬇️ Download Grounded Preparation Report",
             data=st.session_state.report_text,
-            file_name="agentverify_verification_report.md",
+            file_name="agentverify_v1_2_grounded_report.md",
             mime="text/markdown",
             use_container_width=True
         )
@@ -332,7 +353,8 @@ if st.session_state.agent_response:
 st.markdown("---")
 
 st.caption(
-    "AgentVerify AI v1.1 • Fictional data only • "
-    "Gemini primary + Cloudflare Workers AI backup • "
-    "Verification preparation only"
+    "AgentVerify AI v1.2 • Grounded RAG workflow • "
+    "knowledge_base.md • Fictional data only • "
+    "Gemini primary + Cloudflare fallback • "
+    "Benefits must be confirmed directly with payer"
 )
