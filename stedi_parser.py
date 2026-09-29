@@ -65,6 +65,7 @@ def parse_stedi_response(data: dict) -> dict:
     return {
         "payer": payer_name,
         "subscriber_name": subscriber_name,
+        "member_id": subscriber.get("memberId") or "Not returned by eligibility source",
         "errors": errors,
         "dental": dental,
     }
