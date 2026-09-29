@@ -1,0 +1,33 @@
+{
+  "payer": {
+    "name": {
+      "organization": "HUMANA"
+    }
+  },
+  "subscriber": {
+    "name": {
+      "person": {
+        "firstName": "JANE",
+        "lastName": "DOE"
+      }
+    },
+    "memberId": "HUMANA123"
+  },
+  "benefits": {
+    "nonCovered": [
+      {
+        "service": {
+          "system": "STC",
+          "value": "35",
+          "definition": "Dental Care"
+        },
+        "network": {
+          "indicator": "IN_NETWORK"
+        },
+        "messages": [
+          "VIEW CONTRACT FOR COVERAGE DETAILS"
+        ]
+      }
+    ]
+  }
+}
