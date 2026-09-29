@@ -13,7 +13,7 @@ from verification_sheet import build_verification_sheet, sheet_markdown
 # =========================================================
 
 st.set_page_config(
-    page_title="AgentVerify AI",
+    page_title="AgentVerify AI by Aneeq Jawed | Dental Insurance Workflow Assistant",
     page_icon="🦷",
     layout="centered"
 )
@@ -96,11 +96,11 @@ This demo uses fictional patient data only.
 # HEADER
 # =========================================================
 
-st.title("🦷 AgentVerify AI")
+st.title("🦷 AgentVerify AI by Aneeq Jawed")
 
 st.caption(
     "Grounded AI-assisted workflow preparation "
-    "for dental insurance verification"
+    "for dental insurance verification • Python & Streamlit portfolio project"
 )
 
 st.markdown("---")
