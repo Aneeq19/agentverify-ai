@@ -8,10 +8,17 @@ def parse_stedi_response(data: dict) -> dict:
     if not isinstance(data, dict):
         raise TypeError("Eligibility response must be an object")
 
-    payer = data.get("payer") or {}
-    subscriber = data.get("subscriber") or {}
-    person = (subscriber.get("name") or {}).get("person") or {}
-    payer_name = (payer.get("name") or {}).get("organization") or "Not returned by eligibility source"
+    def obj(value):
+        if value is None:
+            return {}
+        if not isinstance(value, dict):
+            raise TypeError("Unexpected eligibility response shape")
+        return value
+
+    payer = obj(data.get("payer"))
+    subscriber = obj(data.get("subscriber"))
+    person = obj(obj(subscriber.get("name")).get("person"))
+    payer_name = obj(payer.get("name")).get("organization") or "Not returned by eligibility source"
     subscriber_name = " ".join(
         str(part) for part in (person.get("firstName"), person.get("lastName"))
         if part
