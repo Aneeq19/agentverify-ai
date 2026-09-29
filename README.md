@@ -1,9 +1,9 @@
-# 🦷 AgentVerify AI v1.3
-## Evaluated Agentic Dental Verification Assistant
+# 🦷 AgentVerify AI by Aneeq Jawed
+## Dental Insurance Verification Workflow Assistant · Python, Streamlit and Agentic AI
 
 AI-assisted, grounded workflow preparation for dental insurance verification.
 
-[🚀 Live Demo](https://agentverify-ai.streamlit.app/) | 🎥 Demo Video | [🧪 10/10 Evaluation](#evaluation) | [💡 What It Does](#what-it-does) | [🤖 Architecture](#architecture)
+[🚀 Live App](https://agentverify-ai.streamlit.app/) | [🧪 DentalVerify AI](https://21-day-ai-builder-byaneeq.streamlit.app/) | 🎥 Demo Video | [🧪 10/10 Evaluation](#evaluation) | [💡 What It Does](#what-it-does) | [🤖 Architecture](#architecture)
 
 > **Evaluation result: 10/10 PASS — 100%**
 >
@@ -313,3 +313,9 @@ GitHub: **Aneeq19**
 AgentVerify AI is an educational workflow-preparation project and is not a replacement for direct payer verification.
 
 **All eligibility and benefits must be confirmed directly with the insurance payer.**
+
+---
+
+## 🔎 Project keywords
+
+AgentVerify AI, Aneeq Jawed, dental insurance verification AI, dental eligibility workflow, dental benefits verification, Python AI agent, Streamlit dental app, Gemini AI, Cloudflare Workers AI.
