@@ -6,6 +6,7 @@ from datetime import datetime
 from agent import run_agent
 from chatbot_data import CHATBOT_RESPONSES
 from stedi_parser import parse_stedi_response
+from verification_sheet import build_verification_sheet, sheet_markdown
 
 # =========================================================
 # PAGE CONFIG
@@ -361,26 +362,27 @@ if st.button("Show Stedi test example", use_container_width=True):
     except (OSError, ValueError, TypeError) as exc:
         st.error(f"Cannot read synthetic fixture: {exc}")
     else:
+        sheet = build_verification_sheet(summary, source_label)
         st.caption(f"Source: {source_label}; no live API request")
-        st.write("**Payer:**", summary["payer"])
-        st.write("**Test subscriber:**", summary["subscriber_name"])
-        if summary["errors"]:
-            st.error("Eligibility source returned an error; no benefits shown.")
-            for message in summary["errors"]:
+        if sheet["errors"]:
+            st.error("The source returned an error. No benefit conclusion is available.")
+            for message in sheet["errors"]:
                 st.write(message)
-        elif summary["dental"]:
-            st.markdown("#### Dental information returned")
-            for item in summary["dental"]:
-                st.write("**Service:**", item["service"])
-                st.write("**Returned status:**", item["status"])
-                st.write("**Network:**", item["network"])
-                for message in item["messages"]:
-                    st.write("**Source message:**", message)
-        else:
-            st.info("Dental benefit: Not returned by eligibility source")
-        st.info(
-            "Annual maximum, maximum used, deductible, crown frequency, "
-            "and other dental details: Not returned by this test example."
+        st.markdown("#### Verification sheet")
+        for field, value, source_field in sheet["rows"]:
+            st.write(f"**{field}:** {value}")
+            if source_field:
+                st.caption(f"Source field: {source_field}")
+        st.warning(
+            "The Dental Care response applies only to this synthetic example. "
+            "Missing benefits were not inferred."
+        )
+        st.download_button(
+            "Download synthetic verification sheet",
+            data=sheet_markdown(sheet),
+            file_name="agentverify_synthetic_eligibility.md",
+            mime="text/markdown",
+            use_container_width=True,
         )
 
 # =========================================================
