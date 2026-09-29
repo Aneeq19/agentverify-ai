@@ -1,7 +1,11 @@
+import json
+from pathlib import Path
+
 import streamlit as st
 from datetime import datetime
 from agent import run_agent
 from chatbot_data import CHATBOT_RESPONSES
+from stedi_parser import parse_stedi_response
 
 # =========================================================
 # PAGE CONFIG
@@ -329,6 +333,47 @@ if st.session_state.agent_response:
             use_container_width=True
         )
 
+
+# =========================================================
+# STEDI SANDBOX DEMO (SAVED SYNTHETIC RESPONSE)
+# =========================================================
+
+st.markdown("---")
+st.subheader("Stedi eligibility sandbox — example")
+st.warning(
+    "Synthetic test data only. This saved example is separate from "
+    "the fictional patient form above. It does not run a live check."
+)
+
+if st.button("Show Stedi test example", use_container_width=True):
+    fixture_path = Path(__file__).parent / "stedi_mock_response.json"
+    try:
+        raw = json.loads(fixture_path.read_text(encoding="utf-8"))
+        summary = parse_stedi_response(raw)
+    except (OSError, ValueError, TypeError) as exc:
+        st.error(f"Cannot read synthetic fixture: {exc}")
+    else:
+        st.caption("Source: recreated Stedi sandbox example; no live API request")
+        st.write("**Payer:**", summary["payer"])
+        st.write("**Test subscriber:**", summary["subscriber_name"])
+        if summary["errors"]:
+            st.error("Eligibility source returned an error; no benefits shown.")
+            for message in summary["errors"]:
+                st.write(message)
+        elif summary["dental"]:
+            st.markdown("#### Dental information returned")
+            for item in summary["dental"]:
+                st.write("**Service:**", item["service"])
+                st.write("**Returned status:**", item["status"])
+                st.write("**Network:**", item["network"])
+                for message in item["messages"]:
+                    st.write("**Source message:**", message)
+        else:
+            st.info("Dental benefit: Not returned by eligibility source")
+        st.info(
+            "Annual maximum, maximum used, deductible, crown frequency, "
+            "and other dental details: Not returned by this test example."
+        )
 
 # =========================================================
 # HELP CHATBOT
