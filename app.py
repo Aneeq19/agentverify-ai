@@ -346,14 +346,22 @@ st.warning(
 )
 
 if st.button("Show Stedi test example", use_container_width=True):
-    fixture_path = Path(__file__).parent / "stedi_mock_response.json"
+    local_fixture = Path(__file__).parent / "stedi_mock_response.json"
+    fixture_path = (
+        local_fixture if local_fixture.exists()
+        else Path(__file__).parent / "stedi_example_response.json"
+    )
+    source_label = (
+        "Locally saved Stedi sandbox response" if local_fixture.exists()
+        else "Recreated Stedi sandbox example"
+    )
     try:
         raw = json.loads(fixture_path.read_text(encoding="utf-8"))
         summary = parse_stedi_response(raw)
     except (OSError, ValueError, TypeError) as exc:
         st.error(f"Cannot read synthetic fixture: {exc}")
     else:
-        st.caption("Source: recreated Stedi sandbox example; no live API request")
+        st.caption(f"Source: {source_label}; no live API request")
         st.write("**Payer:**", summary["payer"])
         st.write("**Test subscriber:**", summary["subscriber_name"])
         if summary["errors"]:
