@@ -34,12 +34,12 @@ def parse_stedi_response(data: dict) -> dict:
     dental = []
     seen = set()
 
-    def walk(node):
+    def walk(node, path="$"):
         if isinstance(node, list):
-            for child in node:
-                walk(child)
+            for index, child in enumerate(node):
+                walk(child, f"{path}[{index}]")
         elif isinstance(node, dict):
-            for item in node.get("nonCovered") or []:
+            for index, item in enumerate(node.get("nonCovered") or []):
                 if not isinstance(item, dict):
                     continue
                 service = item.get("service") or {}
@@ -57,14 +57,15 @@ def parse_stedi_response(data: dict) -> dict:
                     "status": "NON_COVERED",
                     "network": network.get("indicator") if isinstance(network, dict) else None,
                     "messages": [str(message) for message in messages],
+                    "source_path": f"{path}.nonCovered[{index}]",
                 }
                 record["network"] = record["network"] or "Not returned by eligibility source"
                 key = (record["service"], record["network"], tuple(record["messages"]))
                 if key not in seen:
                     dental.append(record)
                     seen.add(key)
-            for child in node.values():
-                walk(child)
+            for key, child in node.items():
+                walk(child, f"{path}.{key}")
 
     if not errors:
         walk(data)

@@ -1,321 +1,123 @@
-# 🦷 AgentVerify AI by Aneeq Jawed
-## Dental Insurance Verification Workflow Assistant · Python, Streamlit and Agentic AI
+# 🦷 AgentVerify AI — Dental Workflow Assistant by Aneeq Jawed
 
-AI-assisted, grounded workflow preparation for dental insurance verification.
+Prepare complete fictional dental verification cases, review source-backed benefits, and generate payer follow-up questions without inventing missing information.
 
-[🚀 Live App](https://agentverify-ai.streamlit.app/) | [🧪 DentalVerify AI](https://21-day-ai-builder-byaneeq.streamlit.app/) | 🎥 Demo Video | [🧪 10/10 Evaluation](#evaluation) | [💡 What It Does](#what-it-does) | [🤖 Architecture](#architecture)
+[Existing live app](https://agentverify-ai.streamlit.app/) · [Demo walkthrough](docs/DEMO.md) · [Sample review](docs/sample-review.txt) · [Implementation notes](docs/IMPLEMENTATION.md)
 
-> **Evaluation result: 10/10 PASS — 100%**
->
-> This means AgentVerify passed its defined fictional evaluation suite.  
-> It does **not** establish clinical, insurance, or real-world benefit accuracy.
+The existing live URL is separate from this branch's release status. See the pull request or branch history before assuming the upgraded app is deployed.
 
----
+## What works
 
-## 🚀 Live Demo
+- Offline preparation without API keys: five one-click fictional scenarios.
+- Required-field checks with separate input-format and completeness status.
+- Dental benefits table with reported, missing, conflicting and source-error states.
+- Separate overall eligibility and dental coverage; medical deductible excluded.
+- Procedure-specific follow-up questions and section-cited keyword retrieval.
+- Human-review status, matching TXT and JSON exports.
+- Patient-free checklist generator, knowledge search and payer-call practice.
+- Saved Stedi synthetic example through a narrow nonCovered adapter.
+- Optional OpenAI function calling and Structured Outputs for prioritizing existing evidence and questions.
 
-**Try AgentVerify AI:**  
-https://agentverify-ai.streamlit.app/
+All example benefit amounts are authored fictional fixtures, not real payer results.
 
-The application is deployed using Streamlit Community Cloud.
+## Example
 
----
+A fictional crown fixture reports an annual maximum of $1,500 and no maximum-used value. The review preserves $1,500 with its source locator, keeps remaining maximum and crown frequency unknown, and prepares questions to obtain them. A separate medical-only fixture reports overall active eligibility but does not produce dental coverage or a dental deductible.
 
-## 🎥 Demo Video
+## Architecture
 
-Final technical demo recorded.
+1. Pydantic validates input shape; deterministic rules identify missing prerequisites.
+2. A source adapter normalizes explicit dental values and their evidence.
+3. Markdown section retrieval supplies workflow guidance with section ID and content version.
+4. Optional OpenAI selects one allowlisted preparation tool and returns validated evidence/question IDs.
+5. The reviewer sees the same normalized values exported to TXT and JSON.
 
-**Demo video link:** Coming soon
+Workflow guidance supports preparation, not patient-specific coverage. No vector database is required for this small curated knowledge base.
 
-The demo shows:
+## Run locally
 
-- A fictional Crown case
-- Agent tool selection
-- RAG retrieval from `knowledge_base.md`
-- Grounded workflow guidance
-- Downloadable preparation report
-- Automated evaluation result: `10/10 PASS — 100%`
-
----
-
-## 💡 What It Does
-
-AgentVerify AI is an agentic AI project for preparing dental insurance verification workflows using **fictional/non-PHI data**.
-
-The system can:
-
-- Check required case information
-- Identify missing information
-- Prepare payer questions
-- Generate structured case summaries
-- Retrieve relevant workflow guidance from a local knowledge base
-- Select an appropriate tool based on the user's request
-- Fall back to a second AI provider if the primary provider fails
-- Produce downloadable preparation reports
-- Run an automated fictional evaluation suite
-
-AgentVerify AI does **not** perform or confirm actual insurance verification.
-
-Benefits must be confirmed directly with the payer.
-
----
-
-## 🤖 Architecture
-
-```text
-Fictional Case + User Request
-            │
-            ▼
-     AgentVerify AI
-            │
-            ▼
-  RAG Knowledge Retrieval
-    knowledge_base.md
-            │
-            ▼
-     Relevant Context
-            │
-            ▼
-       AI Decision
-            │
-      ┌─────┴─────┐
-      │           │
-   Gemini      API Failure
-  Primary          │
-      │            ▼
-      │      Cloudflare Workers AI
-      │           Fallback
-      └──────┬─────┘
-             ▼
-      Agent Tool Selection
-             │
-   ┌─────────┼──────────┐
-   ▼         ▼          ▼
-Required   Payer       Case
-Fields    Questions    Summary
-   │         │          │
-   └─────────┼──────────┘
-             ▼
-    Grounded Preparation
-             │
-             ▼
-     Downloadable Report
-```
-
----
-
-## 🛠️ Tools
-
-AgentVerify currently uses these workflow tools:
-
-### `check_required_fields`
-
-Checks whether required case information is available before preparing the verification workflow.
-
-### `build_payer_questions`
-
-Prepares questions that may need to be asked directly to the insurance payer.
-
-### `generate_case_summary`
-
-Creates a structured summary of the fictional case.
-
-### `search_knowledge_base`
-
-Searches the local non-PHI knowledge base for relevant workflow guidance.
-
----
-
-## 🧠 AI Providers
-
-### Gemini — Primary
-
-Google Gemini is used as the primary AI provider for agent decision-making.
-
-### Cloudflare Workers AI — Fallback
-
-If the primary provider fails, AgentVerify can use Cloudflare Workers AI as its backup provider.
-
-The UI displays which provider was used.
-
----
-
-## 📚 RAG & Grounding
-
-AgentVerify uses:
-
-`knowledge_base.md`
-
-as a small local workflow knowledge base.
-
-It contains general guidance covering topics such as:
-
-- Eligibility questions
-- Annual maximums and deductibles
-- Crown verification preparation
-- Preventive frequency questions
-- Waiting periods
-- Downgrades
-- Preauthorization/predetermination
-
-The knowledge base intentionally does **not** pretend to know patient-specific insurance benefits.
-
-The UI visibly displays:
-
-`Knowledge source used: knowledge_base.md`
-
----
-
-## 🔒 Safety
-
-AgentVerify is a workflow-preparation demonstration.
-
-- Use fictional patient information only.
-- Do not enter real patient information or PHI.
-- Do not assume eligibility or coverage.
-- Do not invent patient-specific percentages or dollar amounts.
-- Do not treat authorization as a guarantee of payment.
-- AgentVerify does not confirm insurance benefits.
-- Benefits and eligibility must be confirmed directly with the payer.
-- API credentials are stored separately from the public repository.
-- `.env` is excluded from GitHub.
-
----
-
-## 🧪 Evaluation
-
-AgentVerify AI v1.3 includes an automated evaluation suite:
-
-- `eval_cases.json`
-- `evaluate.py`
-
-### Result
-
-**10/10 PASS — 100%**
-
-The evaluation uses **10 completely fictional cases**, including:
-
-1. Complete Crown case
-2. Crown missing Member ID
-3. Crown missing Group Number
-4. Preventive cleaning
-5. Missing DOB
-6. Incomplete payer information
-7. Unknown procedure
-8. Waiting-period question
-9. Deductible/annual maximum question
-10. Deliberately vague case
-
-### Evaluation Methodology
-
-The automated suite checks whether:
-
-- Required-field detection works
-- Relevant payer questions are produced
-- RAG/knowledge-base guidance is retrieved when appropriate
-- The output retains the **confirm directly with payer** safety behavior
-
-The final score is calculated automatically by `evaluate.py`.
-
-```text
-FINAL RESULT: 10/10 PASS — 100%
-```
-
-### Evaluation Limitation
-
-**10/10 does not mean AgentVerify is clinically accurate or that it can accurately determine real insurance benefits.**
-
-It means the system passed the **10 fictional test cases and checks defined in this project's evaluation suite**.
-
-Real eligibility, coverage, limitations, frequencies, deductibles, maximums and benefits must still be confirmed directly with the payer.
-
----
-
-## 📸 Screenshot
-
-![AgentVerify AI Live Demo](tt.PNG)
-
----
-
-## 🧰 Tech Stack
-
-- Python
-- Streamlit
-- Google Gemini API
-- Cloudflare Workers AI
-- Local Markdown RAG knowledge base
-- Requests
-- python-dotenv
-- Git
-- GitHub
-- Streamlit Community Cloud
-
----
-
-## 📈 Project Progression
-
-**v1.0 — Tool-using agent**
-
-Introduced agent-driven tool selection for dental verification preparation.
-
-**v1.1 — Provider fallback + downloadable report**
-
-Added Gemini primary / Cloudflare fallback handling, validation and downloadable reports.
-
-**v1.2 — Grounded RAG knowledge base**
-
-Added `knowledge_base.md` and local knowledge retrieval for grounded workflow guidance.
-
-**v1.3 — Automated evaluation suite**
-
-Added 10 fictional evaluation cases and automated testing with `evaluate.py`.
-
-**Evaluation result: 10/10 PASS — 100%**
-
----
-
-## ▶️ Run Locally
-
-Install dependencies:
+Tested with Python 3.12.
 
 ```bash
-pip install -r requirements.txt
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# macOS/Linux: source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m streamlit run app.py
 ```
 
-Create a local `.env` containing your own API credentials.
+The default mode works offline. Select a scenario, press **Prepare review**, inspect its evidence/questions, then download the review sheet.
 
-Then run:
+For the original Gemini/Cloudflare interface:
 
 ```bash
-streamlit run app.py
+python -m streamlit run legacy_app.py
 ```
 
-Run the evaluation suite with:
+## Optional OpenAI mode
+
+Copy .env.example to .env. Set OPENAI_API_KEY and OPENAI_MODEL to an account-accessible model that supports Responses, function calling and Structured Outputs. Equivalent Streamlit secrets are supported. Credentials stay out of Git.
+
+Choose **OpenAI assisted**, prepare a review, select a task, then press **Prioritize with OpenAI**.
+
+- Exactly one allowlisted tool call, then one structured priority response.
+- Invalid tools, arguments, citations and indices are rejected.
+- The model cannot overwrite factual benefit fields or remove unresolved questions.
+- Patient names, birth dates, member IDs, group numbers and free-text notes are excluded from OpenAI requests.
+- Selected existing guidance and questions are rendered instead of unvalidated model prose.
+- No usable key/model, timeout or invalid output leaves the offline review intact.
+
+This release's OpenAI integration has been tested with mocked provider responses. A live authenticated OpenAI call was not performed during development.
+
+Official references: [Responses](https://developers.openai.com/api/reference/responses/overview) and [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=responses).
+
+## Tools and schemas
+
+- check_required_fields: missing preparation prerequisites.
+- build_payer_questions: unanswered/conflicting benefit questions.
+- generate_case_summary: normalized factual case summary.
+- retrieve_workflow_guidance: local section retrieval, used deterministically.
+
+See schemas.py and docs/IMPLEMENTATION.md. A benefit field has a nullable value, status, scope and evidence. Missing is not zero. No remaining-maximum arithmetic is performed on incomplete or ambiguously scoped amounts.
+
+## Tests and evaluation
 
 ```bash
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
 python evaluate.py
 ```
 
-Never commit `.env` or API credentials to GitHub.
+Development results on 2026-10-07: **26 automated tests passed** and the **10-case legacy evaluation passed**. Tests cover malformed/source-error responses, medical/dental separation, conflicts, unknown frequency, report consistency, tool allowlists, bad AI output, offline fallback, Streamlit scenario interactions and review state.
 
----
+The legacy suite checks preparation tools and keyword retrieval; its 10/10 score is not an evaluation of live model reliability or real insurance accuracy. CI reruns both suites.
 
-## 👨‍💻 Developer
+## Costs and operational limits
 
-Built by **Aneeq Jawed** as an applied AI-agent engineering project.
+Offline mode makes no provider calls. OpenAI mode uses up to two requests per explicit action, with bounded output and no automatic retries. The UI caches identical successful actions and limits attempts to three per loaded example. Reloading a scenario/session resets this limit, so it is a demo control, not a global spend cap or public abuse protection. An exposed paid deployment needs server-side quotas/authentication before enabling provider calls broadly.
 
-GitHub: **Aneeq19**
+## Limitations
 
----
+- Fictional demonstration only; no production PHI workflow.
+- No live payer eligibility request, automatic phone call, claim processing or benefit guarantee.
+- The saved Stedi adapter reads dental nonCovered entries only; it is not a comprehensive Stedi benefits parser.
+- Basic keyword retrieval has no semantic/vector search.
+- Manual reviewer confirmation is essential; reviewed status is a demo acknowledgement.
+- New OpenAI mode does not automatically fall back to Gemini; it falls back to offline rules.
+- Legacy provider behavior is retained in legacy_app.py and agent.py.
 
-## ⚠️ Disclaimer
+## Routine value
 
-AgentVerify AI is an educational workflow-preparation project and is not a replacement for direct payer verification.
+Use patient-free procedure checklists for daily preparation, practice fictional payer calls, review common workflow gaps, demonstrate source handling in interviews, or train teammates on fictional examples.
 
-**All eligibility and benefits must be confirmed directly with the insurance payer.**
+## Roadmap
 
----
+Live authenticated OpenAI smoke test; broader documented source adapters; timed usability evaluation; then authorized production data handling and access controls if a real pilot needs them.
 
-## 🔎 Project keywords
+## Developer
 
-AgentVerify AI, Aneeq Jawed, dental insurance verification AI, dental eligibility workflow, dental benefits verification, Python AI agent, Streamlit dental app, Gemini AI, Cloudflare Workers AI.
+Built by **Aneeq Jawed** · [GitHub](https://github.com/Aneeq19).
+
+This dental workflow project is distinct from similarly named academic agent-verification frameworks. No academic authorship or third-party accuracy claims are asserted here.
+
+No software license is currently declared in this repository.

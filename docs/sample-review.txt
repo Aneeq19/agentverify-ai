@@ -1,0 +1,62 @@
+AgentVerify AI — Fictional Dental Verification Review
+By Aneeq Jawed | Synthetic demo; not live patient verification.
+Procedure: Crown
+Source: Authored fictional dental benefits fixture
+Source status: ok
+Review status: Needs review
+Missing prerequisites: None
+Provider: Offline rules
+AI status: Not requested
+
+Overall eligibility: Active [reported] | Evidence: $.benefits[0].value = Active
+Dental coverage: Reported for dental services; procedure review required [reported] | Evidence: $.benefits[1].value = Reported for dental services; procedure review required
+Network: IN_NETWORK [reported] | Evidence: $.benefits[2].value = IN_NETWORK
+Effective date: Not returned by eligibility source [not_returned]
+Termination date: Not returned by eligibility source [not_returned]
+Annual maximum: $1,500 (fictional calendar-year benefit) [reported] | Evidence: $.benefits[3].value = $1,500 (fictional calendar-year benefit)
+Maximum used: Not returned by eligibility source [not_returned]
+Maximum remaining: Not returned by eligibility source [not_returned]
+Dental deductible: Not returned by eligibility source [not_returned]
+Dental deductible met: Not returned by eligibility source [not_returned]
+Preventive coverage: Not returned by eligibility source [not_returned]
+Basic coverage: Not returned by eligibility source [not_returned]
+Major coverage: 50% (fictional example) [reported] | Evidence: $.benefits[4].value = 50% (fictional example)
+Crown replacement frequency: Not returned by eligibility source [not_returned]
+Waiting period: Not returned by eligibility source [not_returned]
+Downgrade: Not returned by eligibility source [not_returned]
+Predetermination: Not returned by eligibility source [not_returned]
+
+FOLLOW-UP QUESTIONS
+- What is the coverage effective date?
+- Is a termination date recorded?
+- How much of the dental annual maximum has been used?
+- What dental annual maximum remains for this benefit period?
+- What dental deductible applies to this procedure?
+- How much of the applicable dental deductible has been met?
+- What is the crown replacement frequency, and when was the previous crown on this tooth?
+- Does a waiting period apply, and has it been satisfied?
+- Does an alternate benefit or material downgrade apply?
+- Is predetermination required or recommended, and what documentation is needed?
+
+WORKFLOW GUIDANCE (not case benefit evidence)
+Source: knowledge_base.md#crown-verification-checklist | version: 6b836a8c9650
+## Crown Verification Checklist
+
+For a crown-related case, prepare questions about:
+
+- Eligibility on the anticipated date of service
+- Coverage category for the crown procedure
+- Applicable deductible
+- Annual maximum and remaining maximum
+- Crown replacement frequency or limitation
+- Date of any previous crown on the same tooth
+- Waiting period
+- Missing-tooth or replacement-related limitations when relevant
+- Downgrade or alternate-benefit provisions
+- Preauthorization or predetermination requirements
+- Documentation requirements
+- Tooth-specific limitations when applicable
+
+Do not state that a crown is covered until benefits are confirmed directly with the payer.
+
+Confirm actual eligibility and benefits through an authorized payer workflow.

@@ -1,467 +1,198 @@
+"""AgentVerify portfolio review UI. Default mode works without credentials."""
 import json
+import os
 from pathlib import Path
 
 import streamlit as st
-from datetime import datetime
-from agent import run_agent
-from chatbot_data import CHATBOT_RESPONSES
-from stedi_parser import parse_stedi_response
-from verification_sheet import build_verification_sheet, sheet_markdown
-
-# =========================================================
-# PAGE CONFIG
-# =========================================================
-
-st.set_page_config(
-    page_title="AgentVerify AI by Aneeq Jawed | Dental Insurance Workflow Assistant",
-    page_icon="🦷",
-    layout="centered"
-)
-
-# =========================================================
-# SESSION STATE
-# =========================================================
-
-if "agent_response" not in st.session_state:
-    st.session_state.agent_response = None
-
-if "report_text" not in st.session_state:
-    st.session_state.report_text = None
-
-if "chat_open" not in st.session_state:
-    st.session_state.chat_open = False
-
-if "chat_answer" not in st.session_state:
-    st.session_state.chat_answer = None
-
-
-# =========================================================
-# REPORT BUILDER
-# =========================================================
-
-def build_report(data, user_request, response):
-
-    provider = response.get("provider", "Unknown")
-    tool_used = response.get("tool_used", "Unknown")
-    knowledge_source = response.get(
-        "knowledge_source",
-        "knowledge_base.md"
-    )
-    result = response.get("result", "No result returned.")
-
-    report = f"""# AgentVerify AI - Grounded Verification Preparation Report
-
-Generated: {datetime.now().strftime("%Y-%m-%d %H:%M")}
-
-## Fictional Patient Information
-
-- Patient Name: {data.get("patient_name") or "Not provided"}
-- Date of Birth: {data.get("dob") or "Not provided"}
-- Member ID: {data.get("member_id") or "Not provided"}
-- Group Number: {data.get("group_number") or "Not provided"}
-- Procedure: {data.get("procedure") or "Not provided"}
-- Notes: {data.get("notes") or "None"}
-
-## Agent Task
-
-{user_request}
-
-## Agent Decision
-
-- AI Provider: {provider}
-- Agent Selected Tool: {tool_used}
-- Knowledge Source Used: {knowledge_source}
-
-## Grounded Preparation Result
-
-{result}
-
-## Important Notice
-
-This report is for dental insurance verification preparation only.
-
-AgentVerify AI does not confirm eligibility, coverage, benefits,
-limitations, frequencies, deductibles, maximums, or payment.
-
-All insurance benefits and eligibility must be confirmed directly
-with the payer.
-
-This demo uses fictional patient data only.
-"""
-
-    return report
-
-
-# =========================================================
-# HEADER
-# =========================================================
-
-st.title("🦷 AgentVerify AI by Aneeq Jawed")
-
-st.caption(
-    "Grounded AI-assisted workflow preparation "
-    "for dental insurance verification • Python & Streamlit portfolio project"
-)
-
-st.markdown("---")
-
-
-# =========================================================
-# SAFETY
-# =========================================================
-
-st.info(
-    "Demo only — use fictional patient information. "
-    "Do not enter real patient information or protected "
-    "health information (PHI)."
-)
-
-
-# =========================================================
-# PATIENT DATA
-# =========================================================
-
-st.subheader("Fictional Patient Data")
-
-col1, col2 = st.columns(2)
-
-with col1:
-
-    patient_name = st.text_input(
-        "Patient Name",
-        value="John Demo"
-    )
-
-    dob = st.text_input(
-        "Date of Birth",
-        value="01/01/1995",
-        placeholder="MM/DD/YYYY"
-    )
-
-    member_id = st.text_input(
-        "Member ID",
-        value=""
-    )
-
-with col2:
-
-    group_number = st.text_input(
-        "Group Number",
-        value="GRP001"
-    )
-
-    procedure = st.text_input(
-        "Procedure",
-        value="Crown"
-    )
-
-    notes = st.text_area(
-        "Notes",
-        value="New patient - needs verification"
-    )
-
-
-data = {
-    "patient_name": patient_name.strip(),
-    "dob": dob.strip(),
-    "member_id": member_id.strip(),
-    "group_number": group_number.strip(),
-    "procedure": procedure.strip(),
-    "notes": notes.strip()
-}
-
-st.markdown("---")
-
-
-# =========================================================
-# AGENT TASK
-# =========================================================
-
-st.subheader("Agent Task")
-
-user_request = st.text_input(
-    "What should the agent do?",
-    value="Check what information is missing"
-)
-
-
-# =========================================================
-# RUN AGENT
-# =========================================================
-
-if st.button(
-    "Run Agent",
-    type="primary",
-    use_container_width=True
-):
-
-    st.session_state.agent_response = None
-    st.session_state.report_text = None
-
-    validation_errors = []
-
-    if not patient_name.strip():
-        validation_errors.append(
-            "Patient Name is required."
-        )
-
-    if not dob.strip():
-        validation_errors.append(
-            "Date of Birth is required."
-        )
-
-    if not procedure.strip():
-        validation_errors.append(
-            "Procedure is required."
-        )
-
-    if not user_request.strip():
-        validation_errors.append(
-            "Please tell the agent what you want it to do."
-        )
-
-    if validation_errors:
-
-        st.error(
-            "Please fix the following before running the agent:"
-        )
-
-        for error in validation_errors:
-            st.write(f"- {error}")
-
-    else:
-
-        st.success("✅ Input Validation PASS")
-
-        with st.spinner(
-            "Searching knowledge and selecting "
-            "the appropriate tool..."
-        ):
-
-            response = run_agent(
-                user_request,
-                data
-            )
-
-        if response.get("success"):
-
-            st.session_state.agent_response = response
-
-            st.session_state.report_text = build_report(
-                data,
-                user_request,
-                response
-            )
-
+from dotenv import load_dotenv
+from pydantic import ValidationError
+
+from demo_cases import CASES, load_demo
+from llm_client import enhance_review
+from report import render_report, review_rows
+from retrieval import retrieve_workflow_guidance
+from schemas import CaseInput
+from workflow import input_errors, prepare_review
+
+load_dotenv()
+st.set_page_config(page_title="AgentVerify AI by Aneeq Jawed | Dental Review",
+                   page_icon="🦷", layout="wide")
+
+
+def load_case(name):
+    demo = load_demo(name)
+    st.session_state.demo = demo
+    st.session_state.demo_name = name
+    for key, value in demo["case"].items():
+        st.session_state[key] = value
+    st.session_state.review = None
+    st.session_state.ai_count = 0
+    st.session_state.ai_cache = {}
+    st.session_state.reviewed = False
+
+
+if "demo" not in st.session_state:
+    load_case("Incomplete crown case")
+
+st.title("🦷 AgentVerify AI")
+st.caption("Dental Verification Preparation & Review Assistant · By Aneeq Jawed")
+st.info("Fictional demo only. Use synthetic examples; do not enter real patient information.")
+
+with st.sidebar:
+    st.subheader("Try a scenario")
+    for name in CASES:
+        st.button(name, on_click=load_case, args=(name,), use_container_width=True)
+    st.divider()
+    mode = st.radio("Preparation mode", ["Offline rules", "OpenAI assisted"])
+    st.caption("Offline mode includes checks, benefits review, checklists and downloads.")
+    if mode == "OpenAI assisted":
+        st.caption("OpenAI chooses a preparation tool and prioritizes existing questions and evidence.")
+    st.page_link("https://github.com/Aneeq19/agentverify-ai", label="View project on GitHub")
+
+review_tab, practice_tab, stedi_tab = st.tabs(
+    ["Case preparation", "Checklist & practice", "Saved Stedi example"])
+
+with review_tab:
+    st.subheader(st.session_state.demo_name)
+    with st.form("case_form"):
+        left, right = st.columns(2)
+        with left:
+            st.text_input("Fictional patient name", key="patient_name", max_chars=100)
+            st.text_input("Date of birth (MM/DD/YYYY)", key="dob", max_chars=20)
+            st.text_input("Member ID", key="member_id", max_chars=100)
+        with right:
+            st.text_input("Group number", key="group_number", max_chars=100)
+            st.text_input("Procedure", key="procedure", max_chars=100)
+            st.text_area("Fictional notes", key="notes", max_chars=2000)
+        submitted = st.form_submit_button("Prepare review", type="primary",
+                                         use_container_width=True)
+    if submitted:
+        st.session_state.review = None
+        st.session_state.reviewed = False
+        try:
+            case = CaseInput(**{key: st.session_state[key] for key in
+                               ("patient_name", "dob", "member_id", "group_number", "procedure", "notes")})
+            errors = input_errors(case)
+            if errors:
+                for error in errors:
+                    st.error(error)
+            else:
+                demo = st.session_state.demo
+                st.session_state.review = prepare_review(case, demo["raw"], demo["format"], demo["source"])
+        except ValidationError:
+            st.error("Some inputs exceed the allowed format or length.")
+    review = st.session_state.review
+    if review:
+        st.success("Input format valid.")
+        if review.missing_fields:
+            st.warning("Verification information incomplete: " + ", ".join(review.missing_fields))
         else:
-
-            st.error(
-                "AgentVerify could not complete the request."
-            )
-
-            st.warning(
-                response.get(
-                    "result",
-                    "The AI service is temporarily unavailable."
-                )
-            )
-
-
-# =========================================================
-# DISPLAY AGENT RESULT
-# =========================================================
-
-if st.session_state.agent_response:
-
-    response = st.session_state.agent_response
-
-    st.success(
-        "Agent finished successfully!"
-    )
-
-    provider = response.get(
-        "provider",
-        "Unknown"
-    )
-
-    tool_used = response.get(
-        "tool_used",
-        "Unknown"
-    )
-
-    knowledge_source = response.get(
-        "knowledge_source",
-        "knowledge_base.md"
-    )
-
-    st.info(
-        f"**AI provider used:** `{provider}`"
-    )
-
-    st.info(
-        f"**Knowledge source used:** `{knowledge_source}`"
-    )
-
-    st.info(
-        f"**Agent selected tool:** `{tool_used}`"
-    )
-
-    st.markdown(
-        "### Grounded Preparation Result"
-    )
-
-    st.markdown(
-        response.get(
-            "result",
-            "No result returned."
-        )
-    )
-
-    st.warning(
-        "⚠️ Preparation only — AgentVerify does not verify "
-        "or confirm insurance benefits. Eligibility, coverage, "
-        "limitations, deductibles, maximums, frequencies and "
-        "benefits must be confirmed directly with the payer."
-    )
-
-    if st.session_state.report_text:
-
-        st.download_button(
-            label="⬇️ Download Grounded Preparation Report",
-            data=st.session_state.report_text,
-            file_name="agentverify_grounded_report.md",
-            mime="text/markdown",
-            use_container_width=True
-        )
-
-
-# =========================================================
-# STEDI SANDBOX DEMO (SAVED SYNTHETIC RESPONSE)
-# =========================================================
-
-st.markdown("---")
-st.subheader("Stedi eligibility sandbox — example")
-st.warning(
-    "Synthetic test data only. This saved example is separate from "
-    "the fictional patient form above. It does not run a live check."
-)
-
-if st.button("Show Stedi test example", use_container_width=True):
-    local_fixture = Path(__file__).parent / "stedi_mock_response.json"
-    fixture_path = (
-        local_fixture if local_fixture.exists()
-        else Path(__file__).parent / "stedi_example_response.json"
-    )
-    source_label = (
-        "Locally saved Stedi sandbox response" if local_fixture.exists()
-        else "Recreated Stedi sandbox example"
-    )
-    try:
-        raw = json.loads(fixture_path.read_text(encoding="utf-8"))
-        summary = parse_stedi_response(raw)
-    except (OSError, ValueError, TypeError) as exc:
-        st.error(f"Cannot read synthetic fixture: {exc}")
+            st.success("Verification prerequisites complete.")
+        st.caption("Source: " + review.source + " · This example is not a live payer check.")
+        if review.case.member_id != st.session_state.demo["case"]["member_id"]:
+            st.caption("Edited form values do not modify the separate synthetic benefits fixture.")
+        if review.source_errors:
+            st.error("Source error: benefit conclusions are unavailable.")
+            for error in review.source_errors:
+                st.write(error)
+        a, b, c = st.columns(3)
+        a.metric("Reported fields", sum(f.status == "reported" for f in review.fields))
+        b.metric("Unanswered fields", sum(f.status in ("not_returned", "source_error") for f in review.fields))
+        c.metric("Conflicting fields", sum(f.status == "conflicting" for f in review.fields))
+        st.markdown("#### Benefit review")
+        st.dataframe(review_rows(review), hide_index=True, use_container_width=True)
+        st.caption("Overall eligibility and dental coverage are separate. Unknown values are never assumed.")
+        if mode == "OpenAI assisted":
+            task = st.selectbox("AI preparation task", [
+                "Prepare payer follow-up questions", "Check missing prerequisites", "Summarize this fictional case"])
+            if st.button("Prioritize with OpenAI"):
+                fingerprint = review.model_dump_json(exclude={"usage", "latency_ms", "ai_status",
+                    "provider", "model", "selected_tool", "review_status"}) + task
+                if fingerprint in st.session_state.ai_cache:
+                    st.session_state.review = st.session_state.ai_cache[fingerprint].model_copy(deep=True)
+                elif st.session_state.ai_count >= 3:
+                    st.warning("This example's three-request limit has been reached.")
+                else:
+                    st.session_state.ai_count += 1
+                    # Read optional secrets without showing their values in the UI.
+                    try:
+                        for key in ("OPENAI_API_KEY", "OPENAI_MODEL"):
+                            if key not in os.environ and key in st.secrets:
+                                os.environ[key] = st.secrets[key]
+                    except FileNotFoundError:
+                        pass
+                    with st.spinner("Preparing evidence priorities..."):
+                        enriched = enhance_review(review, task)
+                    st.session_state.ai_cache[fingerprint] = enriched
+                    st.session_state.review = enriched
+                review = st.session_state.review
+            st.caption(review.ai_status)
+        st.markdown("#### Follow-up questions")
+        for q in review.questions:
+            st.write("• " + q)
+        st.markdown("#### Cited workflow guidance")
+        if not review.guidance:
+            st.write("No matching passage found in the supplied workflow knowledge.")
+        for guidance in review.guidance:
+            with st.expander(guidance.title):
+                st.markdown(guidance.text)
+                st.caption(guidance.source_id + " · version " + guidance.version)
+        reviewed = st.checkbox("I reviewed this fictional example", key="reviewed")
+        review.review_status = "Reviewed fictional example" if reviewed else "Needs review"
+        st.caption("Review status: " + review.review_status)
+        st.caption("Provider: " + review.provider + (" · model: " + review.model if review.model else ""))
+        if review.usage:
+            st.caption(f"Usage: {review.usage} · latency: {review.latency_ms} ms")
+        txt, js = st.columns(2)
+        txt.download_button("Download review TXT", render_report(review),
+                            "agentverify-fictional-review.txt", "text/plain", use_container_width=True)
+        js.download_button("Download review JSON", review.model_dump_json(indent=2),
+                           "agentverify-fictional-review.json", "application/json", use_container_width=True)
     else:
-        sheet = build_verification_sheet(summary, source_label)
-        st.caption(f"Source: {source_label}; no live API request")
-        if sheet["errors"]:
-            st.error("The source returned an error. No benefit conclusion is available.")
-            for message in sheet["errors"]:
-                st.write(message)
-        st.markdown("#### Verification sheet")
-        for field, value, source_field in sheet["rows"]:
-            st.write(f"**{field}:** {value}")
-            if source_field:
-                st.caption(f"Source field: {source_field}")
-        st.warning(
-            "The Dental Care response applies only to this synthetic example. "
-            "Missing benefits were not inferred."
-        )
-        st.download_button(
-            "Download synthetic verification sheet",
-            data=sheet_markdown(sheet),
-            file_name="agentverify_synthetic_eligibility.md",
-            mime="text/markdown",
-            use_container_width=True,
-        )
+        st.write("Choose a scenario and prepare its review. All examples work without an API key.")
 
-# =========================================================
-# HELP CHATBOT
-# =========================================================
+with practice_tab:
+    st.subheader("A daily checklist without patient data")
+    procedure = st.selectbox("Practice procedure", ["Crown", "Preventive cleaning", "Basic filling", "Major bridge"])
+    guidance = retrieve_workflow_guidance(procedure + " eligibility deductible")
+    for passage in guidance:
+        st.markdown(passage.text)
+        st.caption(passage.source_id + " · version " + passage.version)
+    query = st.text_input("Search your workflow knowledge", placeholder="Example: crown replacement frequency")
+    if query:
+        matches = retrieve_workflow_guidance(query)
+        if not matches:
+            st.info("Not found in the supplied workflow knowledge.")
+        for passage in matches:
+            with st.expander(passage.title):
+                st.markdown(passage.text)
+                st.caption(passage.source_id + " · version " + passage.version)
+    st.markdown("#### Practice a payer call")
+    st.write("You are preparing a fictional crown case. Coverage was mentioned, but replacement frequency "
+             "and previous service date were omitted. What would you ask next?")
+    with st.expander("Show suggested questions"):
+        st.write("What crown replacement frequency applies? When was the previous crown on this tooth? "
+                 "Are there waiting periods, downgrades or documentation requirements?")
+    st.download_button("Download procedure checklist",
+                       "\n\n".join(p.text + "\nSource: " + p.source_id for p in guidance),
+                       "agentverify-procedure-checklist.txt", "text/plain")
 
-# =========================================================
-# FLOATING-STYLE HELP CHATBOT
-# =========================================================
+with stedi_tab:
+    st.subheader("Saved synthetic Stedi example")
+    st.caption("Narrow sandbox adapter: reads dental nonCovered entries. No live request or credentials required.")
+    if st.button("Review saved Stedi example"):
+        raw = json.loads(Path(__file__).with_name("stedi_example_response.json").read_text())
+        demo = load_demo("Synthetic dental benefits")
+        # Subscriber in this saved fixture is explicitly independent of the other demo form.
+        case = CaseInput(**{**demo["case"], "patient_name": "Jane Doe",
+                            "dob": "", "member_id": "HUMANA123", "group_number": ""})
+        st.session_state.stedi_review = prepare_review(case, raw, "stedi", "Recreated Stedi sandbox example")
+    if "stedi_review" in st.session_state:
+        saved = st.session_state.stedi_review
+        st.dataframe(review_rows(saved), hide_index=True, use_container_width=True)
+        st.caption("This adapter does not parse comprehensive Stedi benefits. Unknown fields remain unknown.")
+        st.download_button("Download saved-source review", render_report(saved),
+                           "agentverify-stedi-example.txt", "text/plain")
 
-st.markdown(
-    """
-    <style>
-    div[data-testid="stPopover"] {
-        position: fixed;
-        right: 24px;
-        bottom: 24px;
-        z-index: 9999;
-    }
-
-    div[data-testid="stPopover"] > button {
-        border-radius: 24px;
-        padding: 0.65rem 1rem;
-        font-weight: 600;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.20);
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-with st.popover("💬 How can I help you?"):
-
-    st.markdown("### 👋 Hi!")
-    st.caption(
-        "What would you like to know about AgentVerify?"
-    )
-
-    if st.button(
-        "🦷 Our Services",
-        use_container_width=True,
-        key="chat_services"
-    ):
-        st.session_state.chat_answer = "services"
-
-    if st.button(
-        "💰 Pricing",
-        use_container_width=True,
-        key="chat_pricing"
-    ):
-        st.session_state.chat_answer = "pricing"
-
-    if st.button(
-        "⚙️ How It Works",
-        use_container_width=True,
-        key="chat_how"
-    ):
-        st.session_state.chat_answer = "how_it_works"
-
-    if st.button(
-        "📩 Contact Us",
-        use_container_width=True,
-        key="chat_contact"
-    ):
-        st.session_state.chat_answer = "contact"
-
-    if st.button(
-        "🔒 Privacy & Safety",
-        use_container_width=True,
-        key="chat_privacy"
-    ):
-        st.session_state.chat_answer = "privacy"
-
-    if st.session_state.chat_answer:
-
-        answer = CHATBOT_RESPONSES.get(
-            st.session_state.chat_answer
-        )
-
-        if answer:
-            st.markdown("---")
-            st.markdown(answer)
+st.divider()
+st.caption("Workflow preparation and human review. Confirm actual benefits through an authorized payer workflow.")
