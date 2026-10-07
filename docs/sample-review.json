@@ -1,0 +1,173 @@
+{
+  "case": {
+    "patient_name": "John Demo",
+    "dob": "01/01/1995",
+    "member_id": "DEMO123",
+    "group_number": "GRP001",
+    "procedure": "Crown",
+    "notes": "Fictional crown preparation case."
+  },
+  "source": "Authored fictional dental benefits fixture",
+  "source_status": "ok",
+  "source_errors": [],
+  "missing_fields": [],
+  "fields": [
+    {
+      "name": "Overall eligibility",
+      "value": "Active",
+      "status": "reported",
+      "scope": "overall",
+      "evidence": [
+        "$.benefits[0].value = Active"
+      ]
+    },
+    {
+      "name": "Dental coverage",
+      "value": "Reported for dental services; procedure review required",
+      "status": "reported",
+      "scope": "dental",
+      "evidence": [
+        "$.benefits[1].value = Reported for dental services; procedure review required"
+      ]
+    },
+    {
+      "name": "Network",
+      "value": "IN_NETWORK",
+      "status": "reported",
+      "scope": "dental",
+      "evidence": [
+        "$.benefits[2].value = IN_NETWORK"
+      ]
+    },
+    {
+      "name": "Effective date",
+      "value": null,
+      "status": "not_returned",
+      "scope": "dental",
+      "evidence": []
+    },
+    {
+      "name": "Termination date",
+      "value": null,
+      "status": "not_returned",
+      "scope": "dental",
+      "evidence": []
+    },
+    {
+      "name": "Annual maximum",
+      "value": "$1,500 (fictional calendar-year benefit)",
+      "status": "reported",
+      "scope": "dental",
+      "evidence": [
+        "$.benefits[3].value = $1,500 (fictional calendar-year benefit)"
+      ]
+    },
+    {
+      "name": "Maximum used",
+      "value": null,
+      "status": "not_returned",
+      "scope": "dental",
+      "evidence": []
+    },
+    {
+      "name": "Maximum remaining",
+      "value": null,
+      "status": "not_returned",
+      "scope": "dental",
+      "evidence": []
+    },
+    {
+      "name": "Dental deductible",
+      "value": null,
+      "status": "not_returned",
+      "scope": "dental",
+      "evidence": []
+    },
+    {
+      "name": "Dental deductible met",
+      "value": null,
+      "status": "not_returned",
+      "scope": "dental",
+      "evidence": []
+    },
+    {
+      "name": "Preventive coverage",
+      "value": null,
+      "status": "not_returned",
+      "scope": "dental",
+      "evidence": []
+    },
+    {
+      "name": "Basic coverage",
+      "value": null,
+      "status": "not_returned",
+      "scope": "dental",
+      "evidence": []
+    },
+    {
+      "name": "Major coverage",
+      "value": "50% (fictional example)",
+      "status": "reported",
+      "scope": "dental",
+      "evidence": [
+        "$.benefits[4].value = 50% (fictional example)"
+      ]
+    },
+    {
+      "name": "Crown replacement frequency",
+      "value": null,
+      "status": "not_returned",
+      "scope": "dental",
+      "evidence": []
+    },
+    {
+      "name": "Waiting period",
+      "value": null,
+      "status": "not_returned",
+      "scope": "dental",
+      "evidence": []
+    },
+    {
+      "name": "Downgrade",
+      "value": null,
+      "status": "not_returned",
+      "scope": "dental",
+      "evidence": []
+    },
+    {
+      "name": "Predetermination",
+      "value": null,
+      "status": "not_returned",
+      "scope": "dental",
+      "evidence": []
+    }
+  ],
+  "questions": [
+    "What is the coverage effective date?",
+    "Is a termination date recorded?",
+    "How much of the dental annual maximum has been used?",
+    "What dental annual maximum remains for this benefit period?",
+    "What dental deductible applies to this procedure?",
+    "How much of the applicable dental deductible has been met?",
+    "What is the crown replacement frequency, and when was the previous crown on this tooth?",
+    "Does a waiting period apply, and has it been satisfied?",
+    "Does an alternate benefit or material downgrade apply?",
+    "Is predetermination required or recommended, and what documentation is needed?"
+  ],
+  "guidance": [
+    {
+      "source_id": "knowledge_base.md#crown-verification-checklist",
+      "title": "Crown Verification Checklist",
+      "text": "## Crown Verification Checklist\n\nFor a crown-related case, prepare questions about:\n\n- Eligibility on the anticipated date of service\n- Coverage category for the crown procedure\n- Applicable deductible\n- Annual maximum and remaining maximum\n- Crown replacement frequency or limitation\n- Date of any previous crown on the same tooth\n- Waiting period\n- Missing-tooth or replacement-related limitations when relevant\n- Downgrade or alternate-benefit provisions\n- Preauthorization or predetermination requirements\n- Documentation requirements\n- Tooth-specific limitations when applicable\n\nDo not state that a crown is covered until benefits are confirmed directly with the payer.",
+      "version": "6b836a8c9650"
+    }
+  ],
+  "review_status": "Needs review",
+  "provider": "Offline rules",
+  "model": null,
+  "prompt_version": "review-v1",
+  "ai_status": "Not requested",
+  "selected_tool": null,
+  "usage": {},
+  "latency_ms": null
+}

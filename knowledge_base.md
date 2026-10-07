@@ -79,6 +79,35 @@ Do not assume preventive services are covered at any particular percentage.
 
 ---
 
+## Basic and Filling Verification Checklist
+
+For a basic service such as a filling, prepare questions about:
+
+- The benefit category for the exact procedure code
+- Applicable deductible, annual maximum and remaining maximum
+- Frequency limits and previous service dates on the same tooth or surface
+- Age restrictions, waiting periods and alternate material benefits
+- Tooth and surface details required by the payer
+
+Do not assume that every filling is classified as basic. Confirm directly with the payer.
+
+---
+
+## Major and Bridge Verification Checklist
+
+For major services such as a bridge, prepare questions about:
+
+- Benefit category for the exact procedure codes
+- Applicable deductible, annual maximum and remaining maximum
+- Replacement frequency and previous placement date
+- Missing-tooth provisions and waiting periods
+- Alternate benefit, downgrade and tooth-specific limitations
+- Predetermination and required documentation
+
+Do not assume major services are covered. Confirm directly with the payer.
+
+---
+
 ## Waiting-Period Questions
 
 When a waiting period may apply, consider asking:
